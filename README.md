@@ -3,8 +3,11 @@ qt实现的类似xeyes的小程序
 
 ----------
 参考了[qt-tuxeyes][1]
+
 没有使用qGraphicView
+
 用计算的方式进行了实现
+
 ![1.gif][2]
 
 
