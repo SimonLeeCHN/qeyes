@@ -5,12 +5,15 @@
 #include <QtDebug>
 #include <QtMath>
 #include <QTimer>
+#include <QScreen>
 
 /*
  *  左右眼中心位置按照宽度计算
  *  巩膜及虹膜半径长度按照高度计算
  */
 #define EYE_REFRUSH_TIME            10
+#define EYE_WIDGETSIZE_RATIO        0.15
+#define EYE_WIDGETALPHA_RATIO       0.9
 
 #define EYE_RIGHTCENTER_X_RATIO     0.75        //右眼中心位置即总宽度*RATIO eg:800*0.75 = 600
 #define EYE_LEFTCENTER_X_RATIO      0.25        //左眼中心位置即总宽度*RATIO eg:800*0.25 = 200
@@ -19,10 +22,7 @@
 
 #define EYE_SCLERA_RATIO        0.39        //巩膜半径长度即宽高最小者*RATIO eg:460*0.39 = 180
 
-#define EYE_PUPIL_RATIO         0.17       //瞳孔半径长度即巩膜半径*RATIO eg:180*0.065 = 30
-
-QPoint g_qpRightPupilCenter;
-QPoint g_qpLeftPupilCenter;
+#define EYE_PUPIL_RATIO         0.3       //瞳孔半径长度即巩膜半径*RATIO eg:180*0.065 = 30
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -30,16 +30,28 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    this->resizeEvent(nullptr);
+    //计算初始窗口大小
+    QScreen* _screen = QGuiApplication::primaryScreen();
+    QRect _primaryScreenRect = _screen->availableGeometry();
+    int _widgetWidth = int(_primaryScreenRect.width() * EYE_WIDGETSIZE_RATIO);
+    int _widgetHeight = int(_primaryScreenRect.height() * EYE_WIDGETSIZE_RATIO);
+
+    //窗体设置
+    this->setWindowFlags(this->windowFlags() | Qt::WindowStaysOnTopHint | Qt::FramelessWindowHint);
+    this->setWindowOpacity(EYE_WIDGETALPHA_RATIO);
+    this->setGeometry((_primaryScreenRect.width() - _widgetWidth) / 2
+                      ,0
+                      ,_widgetWidth
+                      ,_widgetHeight);
+
     m_timer.start(EYE_REFRUSH_TIME);
     connect(&m_timer,&QTimer::timeout,this,&MainWindow::onTimerup);
 
-    //draw background
+    //background
     this->setAutoFillBackground(true);
     QPalette _pal = palette();
     _pal.setBrush(QPalette::Background,Qt::black);
     this->setPalette(_pal);
-
 }
 
 MainWindow::~MainWindow()
@@ -89,9 +101,10 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
     //draw pupli
     _painter.setBrush(QBrush(Qt::black));
-    _painter.drawEllipse(g_qpLeftPupilCenter,m_iPupilRadius,m_iPupilRadius);
-    _painter.drawEllipse(g_qpRightPupilCenter,m_iPupilRadius,m_iPupilRadius);
+    _painter.drawEllipse(m_qpLeftPupilCenter,m_iPupilRadius,m_iPupilRadius);
+    _painter.drawEllipse(m_qpRightPupilCenter,m_iPupilRadius,m_iPupilRadius);
 
+    QWidget::paintEvent(event);
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event)
@@ -118,18 +131,48 @@ void MainWindow::resizeEvent(QResizeEvent *event)
               ,m_qpEyeLeftCenter.y() - m_iScleraRadius);
     QPoint rb(m_qpEyeRightCenter.x() + m_iScleraRadius
               ,m_qpEyeRightCenter.y() + m_iScleraRadius);
+    if(!m_pEyeArea)
+        delete m_pEyeArea;
     m_pEyeArea = new QRect(lt,rb);
 
-    g_qpLeftPupilCenter = m_qpEyeLeftCenter;
-    g_qpRightPupilCenter = m_qpEyeRightCenter;
+    m_qpLeftPupilCenter = m_qpEyeLeftCenter;
+    m_qpRightPupilCenter = m_qpEyeRightCenter;
 }
 
 void MainWindow::onTimerup()
 {
     QPoint _mousePos = this->mapFromGlobal(QCursor::pos());
 
-    this->calculatePosition(_mousePos,m_qpEyeLeftCenter,g_qpLeftPupilCenter);
-    this->calculatePosition(_mousePos,m_qpEyeRightCenter,g_qpRightPupilCenter);
+    this->calculatePosition(_mousePos,m_qpEyeLeftCenter,m_qpLeftPupilCenter);
+    this->calculatePosition(_mousePos,m_qpEyeRightCenter,m_qpRightPupilCenter);
 
     this->update(*m_pEyeArea);
+}
+
+QPoint _qpDragStartPoint;
+QPoint _qpWidgetPoint;
+
+void MainWindow::mousePressEvent(QMouseEvent *event)
+{
+    if(event->buttons() & Qt::LeftButton)
+    {
+        _qpDragStartPoint = event->globalPos();
+        _qpWidgetPoint = this->frameGeometry().topLeft();
+
+        this->setWindowFlags(this->windowFlags() & (~Qt::FramelessWindowHint));
+        this->show();
+    }
+
+    QWidget::mousePressEvent(event);
+}
+
+void MainWindow::mouseMoveEvent(QMouseEvent *event)
+{
+    if(event->buttons() & Qt::LeftButton)
+    {
+        QPoint _offset = event->globalPos() - _qpDragStartPoint;
+        this->move(_qpWidgetPoint + _offset);
+    }
+
+    QWidget::mouseMoveEvent(event);
 }

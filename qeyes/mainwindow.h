@@ -28,16 +28,20 @@ private:
 
     QPoint m_qpEyeLeftCenter;
     QPoint m_qpEyeRightCenter;
+    QPoint m_qpRightPupilCenter;
+    QPoint m_qpLeftPupilCenter;
     int m_iScleraRadius;
     int m_iPupilRadius;
-    QRect *m_pEyeArea;
+
+    QRect* m_pEyeArea = nullptr;
 
     void calculatePosition(QPoint,QPoint,QPoint&);
 
 protected:
     void paintEvent(QPaintEvent *);
     void resizeEvent(QResizeEvent *event);
-
+    void mousePressEvent(QMouseEvent *event);
+    void mouseMoveEvent(QMouseEvent *event);
 };
 
 #endif // MAINWINDOW_H
