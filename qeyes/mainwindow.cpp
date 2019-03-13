@@ -12,15 +12,15 @@
  *  巩膜及虹膜半径长度按照高度计算
  */
 #define EYE_REFRUSH_TIME            10
-#define EYE_WIDGETSIZE_RATIO        0.15
-#define EYE_WIDGETALPHA_RATIO       0.9
+#define EYE_WIDGETSIZE_RATIO        1
+#define EYE_WIDGETALPHA_RATIO       1
 
-#define EYE_RIGHTCENTER_X_RATIO     0.75        //右眼中心位置即总宽度*RATIO eg:800*0.75 = 600
-#define EYE_LEFTCENTER_X_RATIO      0.25        //左眼中心位置即总宽度*RATIO eg:800*0.25 = 200
+#define EYE_RIGHTCENTER_X_RATIO     0.65        //右眼中心位置即总宽度*RATIO eg:800*0.75 = 600
+#define EYE_LEFTCENTER_X_RATIO      0.35        //左眼中心位置即总宽度*RATIO eg:800*0.25 = 200
 #define EYE_RIGHTCENTER_Y_RATIO     0.5
 #define EYE_LEFTCENTER_Y_RATIO      0.5
 
-#define EYE_SCLERA_RATIO        0.39        //巩膜半径长度即宽高最小者*RATIO eg:460*0.39 = 180
+#define EYE_SCLERA_RATIO        0.25        //巩膜半径长度即宽高最小者*RATIO eg:460*0.39 = 180
 
 #define EYE_PUPIL_RATIO         0.3       //瞳孔半径长度即巩膜半径*RATIO eg:180*0.065 = 30
 
@@ -37,12 +37,14 @@ MainWindow::MainWindow(QWidget *parent) :
     int _widgetHeight = int(_primaryScreenRect.height() * EYE_WIDGETSIZE_RATIO);
 
     //窗体设置
-    this->setWindowFlags(this->windowFlags() | Qt::WindowStaysOnTopHint | Qt::FramelessWindowHint);
+    this->setWindowFlags(this->windowFlags()  | Qt::FramelessWindowHint | Qt::WindowStaysOnBottomHint | Qt::BypassGraphicsProxyWidget);
     this->setWindowOpacity(EYE_WIDGETALPHA_RATIO);
-    this->setGeometry((_primaryScreenRect.width() - _widgetWidth) / 2
+    this->setGeometry(0
                       ,0
                       ,_widgetWidth
                       ,_widgetHeight);
+
+    this->resizeEvent(NULL);
 
     m_timer.start(EYE_REFRUSH_TIME);
     connect(&m_timer,&QTimer::timeout,this,&MainWindow::onTimerup);
@@ -154,25 +156,25 @@ QPoint _qpWidgetPoint;
 
 void MainWindow::mousePressEvent(QMouseEvent *event)
 {
-    if(event->buttons() & Qt::LeftButton)
-    {
-        _qpDragStartPoint = event->globalPos();
-        _qpWidgetPoint = this->frameGeometry().topLeft();
+//    if(event->buttons() & Qt::LeftButton)
+//    {
+//        _qpDragStartPoint = event->globalPos();
+//        _qpWidgetPoint = this->frameGeometry().topLeft();
 
-        this->setWindowFlags(this->windowFlags() & (~Qt::FramelessWindowHint));
-        this->show();
-    }
+//        this->setWindowFlags(this->windowFlags() & (~Qt::FramelessWindowHint));
+//        this->show();
+//    }
 
     QWidget::mousePressEvent(event);
 }
 
 void MainWindow::mouseMoveEvent(QMouseEvent *event)
 {
-    if(event->buttons() & Qt::LeftButton)
-    {
-        QPoint _offset = event->globalPos() - _qpDragStartPoint;
-        this->move(_qpWidgetPoint + _offset);
-    }
+//    if(event->buttons() & Qt::LeftButton)
+//    {
+//        QPoint _offset = event->globalPos() - _qpDragStartPoint;
+//        this->move(_qpWidgetPoint + _offset);
+//    }
 
     QWidget::mouseMoveEvent(event);
 }
